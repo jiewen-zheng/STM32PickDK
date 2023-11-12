@@ -5,30 +5,29 @@
 #include "common_inc.h"
 #include "OLed.h"
 #include "Commander/Commander.h"
-#include "stm32f1xx.h"
+#include "SoftTimer/SoftTimer.h"
 
-#include <cstring>
-#include <cstdio>
+#include "gpio.h"
 
 OLed      u8g2;
-//Commander commander(256);
+Commander commander(256);
 
 //target variable
 float target_velocity = 0;
 char  str[32]         = "你好世界";
 
 void receivedCommand(uint8_t *data, uint32_t size) {
-//    commander.write((char *) data, size);
+    commander.write((char *) data, size);
 }
 //
-//void doTarget(char *cmd) {
-//    memset(str, 0, 32);
-//    commander.str(str, cmd);
-//    u8g2.firstPage();
-//    do {
-//        u8g2.drawUTF8((u8g2.getWidth() - u8g2.getUTF8Width(str)) / 2, 32, str);
-//    } while (u8g2.nextPage());
-//}
+void doTarget(char *cmd) {
+    memset(str, 0, 32);
+    commander.str(str, cmd);
+    u8g2.firstPage();
+    do {
+        u8g2.drawUTF8((u8g2.getWidth() - u8g2.getUTF8Width(str)) / 2, 32, str);
+    } while (u8g2.nextPage());
+}
 
 
 
@@ -158,7 +157,8 @@ extern "C" void Main() {
 //    commander.add("str", doTarget);
     for (;;) {
 
-        _delay(1);
+        _delay(500);
+        HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
         draw("What a beautiful day!", SUN, 27);
         draw("The sun's come out!", SUN_CLOUD, 19);

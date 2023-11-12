@@ -1,7 +1,12 @@
 # 基于STM32F103C8T6的迷你开发板
+---
 >* Coretx-M3架构，72MHz主频
 >* 20KB RAM，128KB FLASH
 >
+
+
+
+由于gcc编译代码太大，工程使用clion cmake采样keil同款armclang编译器进行编译
 
 
 

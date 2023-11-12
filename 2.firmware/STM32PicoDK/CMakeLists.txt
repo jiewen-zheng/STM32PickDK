@@ -1,88 +1,147 @@
-#此文件从模板自动生成! 请勿更改!
+cmake_minimum_required(VERSION 3.25)
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_VERSION 1)
-cmake_minimum_required(VERSION 3.25)
 
-# specify cross-compilers and tools
-set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-set(CMAKE_ASM_COMPILER  arm-none-eabi-gcc)
-set(CMAKE_AR arm-none-eabi-ar)
-set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
-set(CMAKE_OBJDUMP arm-none-eabi-objdump)
-set(SIZE arm-none-eabi-size)
-set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+##################################################
+#                 Config project                 #
+##################################################
+set(PROJECT_NAME STM32PicoDK)
+set(CMAKE_SYSTEM_PROCESSOR Cortex-M3)
+set(OPTIMIZATION_LEVEL -O0)
+set(FPU_ENABLE FALSE)
 
-# project settings
+##################################################
+#                 Compilers Path                 #
+##################################################
+
+set(KEIL_PATH D:/software/Keil_v5)
+set(ARMCLANG_PATH ${KEIL_PATH}/ARM/ARMCLANG/bin)
+set(SECTIONS_SCRIPT_PATH ${CMAKE_HOME_DIRECTORY}/MDK-ARM/${PROJECT_NAME}/${PROJECT_NAME}.sct)
+
+##################################################
+#           Specify compilers and tools          #
+##################################################
+set(CMAKE_C_COMPILER ${ARMCLANG_PATH}/armclang.exe)
+set(CMAKE_CXX_COMPILER ${ARMCLANG_PATH}/armclang.exe)
+set(CMAKE_ASM_COMPILER  ${ARMCLANG_PATH}/armclang.exe)
+set(CMAKE_C_COMPILER_WORKS TRUE)
+set(CMAKE_CXX_COMPILER_WORKS TRUE)
+set(CMAKE_ASM_COMPILER_WORKS TRUE)
+
+set(CMAKE_C_LINK_EXECUTABLE ${ARMCLANG_PATH}/armlink.exe)
+set(CMAKE_CXX_LINK_EXECUTABLE ${ARMCLANG_PATH}/armlink.exe)
+set(CMAKE_ASM_LINK_EXECUTABLE ${ARMCLANG_PATH}/armlink.exe)
+
+##################################################
+#                Config Compilers                #
+##################################################
+
+set(C_TARGET_FLAG --target=arm-arm-none-eabi)
+set(ASM_TARGET_FLAG --target=arm-arm-none-eabi)
+set(LINKER_TARGET_FLAG --cpu=${CMAKE_SYSTEM_PROCESSOR})
+
+set(COMPILE_RULE_FLAG "-mcpu=${CMAKE_SYSTEM_PROCESSOR}")
+
+# C compilers options
+set(CMAKE_C_FLAGS_INIT "${C_TARGET_FLAG} ${COMPILE_RULE_FLAG} -c \
+            -fno-rtti -flto -funsigned-char -fshort-enums -fshort-wchar \
+            -gdwarf-4 ${OPTIMIZATION_LEVEL} -ffunction-sections -w\
+            ")
+# C++ compilers options
+set(CMAKE_CXX_FLAGS_INIT "${CMAKE_C_FLAGS_INIT}")
+
+# ASM compilers options
+set(CMAKE_ASM_FLAGS_INIT "${ASM_TARGET_FLAG} ${COMPILE_RULE_FLAG} \
+            -masm=auto -c -gdwarf-4 \
+            ")
+
+##################################################
+#                Config Linker                   #
+##################################################
+
+set(CMAKE_EXE_LINKER_FLAGS_INIT "\
+            ${LINKER_TARGET_FLAG} \
+            --lto \
+            --strict --scatter ${SECTIONS_SCRIPT_PATH} \
+            --summary_stderr \
+            --info summarysizes \
+            --map --load_addr_map_info --xref --callgraph --symbols \
+            --info sizes --info totals --info unused --info veneers \
+            ")
+
+# Enable ASM
+#ENABLE_LANGUAGE(ASM)
+
+# Check FPU
+if(FPU_ENABLE)
+    add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
+    add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+    add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+else()
+    add_compile_options(-mfloat-abi=soft -mfpu=none)
+endif()
+
+##################################################
+#                Config Language                 #
+##################################################
+
 project(STM32PicoDK C CXX ASM)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_C_STANDARD 11)
 
-#Uncomment for hardware floating point
-#add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
-#add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
-#add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+set(CMAKE_C_STANDARD 99)
 
-#Uncomment for software floating point
-#add_compile_options(-mfloat-abi=soft)
+set(CMAKE_CXX_STANDARD 11)
 
-add_compile_options(-mcpu=cortex-m3 -mthumb -mthumb-interwork)
-add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
+##################################################
+#                Config mcu file                 #
+##################################################
 
-# uncomment to mitigate c++17 absolute addresses warnings
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-register")
+add_definitions(-DUSE_HAL_DRIVER -DSTM32F103xB)
 
-# Enable assembler files preprocessing
-add_compile_options($<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>)
-
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    message(STATUS "Maximum optimization for speed")
-    add_compile_options(-Ofast)
-elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-    message(STATUS "Maximum optimization for speed, debug info included")
-    add_compile_options(-Ofast -g)
-elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
-    message(STATUS "Maximum optimization for size")
-    add_compile_options(-Os)
-else ()
-    message(STATUS "Minimal optimization, debug info included")
-    add_compile_options(-Og -g)
-endif ()
-
-include_directories(Core/Inc
-        Drivers/STM32F1xx_HAL_Driver/Inc
+include_directories(
+        Core/Inc
         Drivers/STM32F1xx_HAL_Driver/Inc/Legacy
+        Drivers/STM32F1xx_HAL_Driver/Inc
         Drivers/CMSIS/Device/ST/STM32F1xx/Include
-        Drivers/CMSIS/Include USB_DEVICE/App
-        USB_DEVICE/Target
-        Middlewares/ST/STM32_USB_Device_Library/Core/Inc
-        Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+        Drivers/CMSIS/Include
         UserApp
-        )
-
-add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xB)
+)
 
 file(GLOB_RECURSE SOURCES
         "Core/*.*"
-        "Middlewares/*.*"
         "Drivers/*.*"
-        "USB_DEVICE/*.*"
-        "UserApp/*.*"
+        "UserApp/*.cpp"
+        "UserApp/*.c"
         )
 
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F103C8TX_FLASH.ld)
+# add startup file
+file(GLOB_RECURSE SOURCES
+        ${SOURCES}
+        "MDK-ARM/startup_stm32f103xb.s"
+        )
 
-add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)
-add_link_options(-mcpu=cortex-m3 -mthumb -mthumb-interwork)
-add_link_options(-T ${LINKER_SCRIPT})
+# exclude file list
+file(GLOB REMOVE_SOURCES
+        "Core/Startup/*.*"
+        "Core/Src/syscalls.c"
+        "Core/Src/sysmem.c"
+        "STM32F103C8Tx_FLASH.ld"
+        )
 
-add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT})
+list(REMOVE_ITEM SOURCES ${REMOVE_SOURCES})
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${LINKER_SCRIPT})
+
+##################################################
+#                  Config Build                  #
+##################################################
 
 set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
+set(ELF_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.elf)
 
-add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${HEX_FILE}
-        COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}.elf> ${BIN_FILE}
-        COMMENT "Building ${HEX_FILE}
-Building ${BIN_FILE}")
+set(ARMCC_FROMELF ${ARMCLANG_PATH}/fromelf.exe)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMENT "Building ${HEX_FILE}"
+        COMMAND ${ARMCC_FROMELF} --i32combined --output="${HEX_FILE}" "${ELF_FILE}"
+        )

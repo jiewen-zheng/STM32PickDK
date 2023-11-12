@@ -11,7 +11,7 @@ class OLed : public U8G2 {
 public:
     int cursor_offset = 0;
 public:
-    explicit OLed(const u8g2_cb_t *rotation = U8G2_R2);
+    explicit OLed(const u8g2_cb_t *rotation = U8G2_R0);
 
     void enable(bool en = true);
 
