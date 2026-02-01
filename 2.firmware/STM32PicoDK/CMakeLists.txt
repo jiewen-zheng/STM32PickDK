@@ -109,8 +109,9 @@ include_directories(
 file(GLOB_RECURSE SOURCES
         "Core/*.*"
         "Drivers/*.*"
-        "UserApp/*.cpp"
+        "UserApp/*.*"
         "UserApp/*.c"
+        "UserApp/*.cpp"
         )
 
 # add startup file
@@ -124,12 +125,14 @@ file(GLOB REMOVE_SOURCES
         "Core/Startup/*.*"
         "Core/Src/syscalls.c"
         "Core/Src/sysmem.c"
+        "UserApp/TFT_Lcd/*.*"
         "STM32F103C8Tx_FLASH.ld"
         )
 
 list(REMOVE_ITEM SOURCES ${REMOVE_SOURCES})
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${LINKER_SCRIPT})
+add_executable(${PROJECT_NAME} ${SOURCES} ${LINKER_SCRIPT}
+        UserApp/example.h)
 
 ##################################################
 #                  Config Build                  #

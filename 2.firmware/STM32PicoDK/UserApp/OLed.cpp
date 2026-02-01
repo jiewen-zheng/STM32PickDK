@@ -112,4 +112,3 @@ void OLed::print(int msg) {
 
     cursor_offset += getUTF8Width(str);
 }
-

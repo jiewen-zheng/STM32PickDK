@@ -1,0 +1,15 @@
+# Build and Release Folders
+cmake-build-debug/
+/cmake-build-debug
+
+#cmake-build-release/
+
+*.a
+*.o
+
+# Other files and folders
+.idea/
+.vscode/
+
+# hard files
+History
